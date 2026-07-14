@@ -41,7 +41,7 @@ AI Hub 판결문 익명화 데이터로 **KLUE-BERT**를 파인튜닝하여, 한
 | 학습 프레임워크 | HuggingFace Transformers + PyTorch |
 | 평가 | seqeval (entity-level F1) |
 | 데모 앱 | Streamlit (Hugging Face Spaces 배포 예정) |
-| 학습 환경 | Google Colab (T4 GPU) |
+| 학습 환경 | 로컬 GPU (RTX 3060, 12GB) — Colab T4 대체 |
 
 ---
 
