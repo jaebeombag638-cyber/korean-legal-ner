@@ -201,6 +201,8 @@
 
 ## 6. 실제 JSON 예시 (가사 사건, 66르161)
 
+> **2026-07-14 수정**: 이 섹션은 원래 실제 파일을 보지 않고 작성되어 내용이 틀려 있었다 (annotation_count 14, A1 `original_text: "최도선"` 등은 실제 파일과 다름). 아래는 다운로드한 실제 파일(`Training/02.라벨링데이터/01.일반판결/가사/1966_가사_하급심_66르161.json`)을 직접 열어 확인한 정확한 내용으로 교체함.
+
 ### 파일명
 `1966_가사_하급심_66르161.json`
 
@@ -214,9 +216,10 @@
     "courtType": "하급심",
     "courtNm": "대구고법",
     "judmnAdjuDe": "1966-10-21",
+    "caseNoID": "72131",
     "caseNo": "66르161",
     "caseClass": "가사",
-    "annotation_count": 14
+    "annotation_count": 6
   }
 }
 ```
@@ -230,28 +233,46 @@
 | S4 | 원고, 항소인 | 3 |
 | S5 | 피고, 피항소인 | 3 |
 | S6 | 원심판결 | 21 |
-| S7 | 주 문 | 29 |
+| S7 | #이름# | 29 |
 | S8 | 청구 및 항소취지 | 59 |
 | S9 | 이 유 | **1,759** (가장 긴 섹션) |
 | S10 | 재판부 | 19 |
 
-### annotations 예시 (annotation_count=14, A1~A14)
+> S4/S5(원고·피고)는 `임○희`, `박○기`처럼 이름 일부가 이미 `○`로 마스킹된 채 원문으로 제공됨. S7 제목과 S9/S10 본문에는 `#이름#`이라는 문자열 그대로 들어있는 경우도 있음 — 즉 raw 텍스트 단계에서 이미 부분적으로 비식별화되어 있고, `original_text`가 항상 실제 이름은 아님 (아래 A1, A3 참조).
 
-**A1 (R1 - 인명):**
+### annotations (annotation_count=6, A1~A6, 실제 값)
+
+**A1 (R1 - 인명, S9):**
 ```json
 {
   "annotation_id": "A1",
   "section_id": ["S9"],
   "span": [{"start": 259, "end": 262}],
-  "original_text": "최도선",
+  "original_text": "#이름#",
   "method": "GENERALIZE",
   "replacement_text": "증인-1",
-  "link_entity_id": "E-250844",
+  "link_entity_id": "E-328",
   "rationale": "사건 인물 실명은 직접식별자이므로 일반화 처리",
   "rules_triggered": "R1"
 }
 ```
-검증: `S9.text[259:262]` = `"최도선"` ✓ (3자, end-start=3)
+검증: `S9.text[259:262]` = `"#이름"` (3자) — `original_text`(`"#이름#"`, 4자)와 **길이부터 불일치**. 원문이 이미 placeholder로 치환된 경우의 대표 사례 (계획.md 0단계 span 불일치 이슈 참조).
+
+**A2 (R1 - 인명, S9, 실명이 남아있는 경우):**
+```json
+{
+  "annotation_id": "A2",
+  "section_id": ["S9"],
+  "span": [{"start": 267, "end": 270}],
+  "original_text": "임부금",
+  "method": "GENERALIZE",
+  "replacement_text": "증인-2",
+  "link_entity_id": "E-329",
+  "rationale": "사건 인물 실명은 직접식별자이므로 일반화 처리",
+  "rules_triggered": "R1"
+}
+```
+검증: `S9.text[267:270]` = `"임부금"` ✓ (실명이 그대로 남아있어 span이 정확히 일치하는 케이스)
 
 **A4 (R7 - 기관명, S6 섹션):**
 ```json
@@ -262,13 +283,14 @@
   "original_text": "부산지방법원",
   "method": "GENERALIZE",
   "replacement_text": "조직-1",
-  "link_entity_id": "E-250847",
+  "link_entity_id": "E-331",
   "rationale": "기업명/법인명은 조직식별자이므로 일반화 처리",
   "rules_triggered": "R7"
 }
 ```
+검증: `S6.text[4:10]` = `"부산지방법원"` ✓
 
-**A5 (R7 - 기관명, S9 섹션, 필드 일부 생략):**
+**A5 (R7 - 기관명, S9 섹션):**
 ```json
 {
   "annotation_id": "A5",
@@ -277,45 +299,34 @@
   "original_text": "대전지방법원",
   "method": "GENERALIZE",
   "replacement_text": "조직-2",
-  "link_entity_id": "E-250848",
+  "link_entity_id": "E-332",
   "rationale": "기업명/법인명은 조직식별자이므로 일반화 처리",
   "rules_triggered": "R7"
 }
 ```
-→ 같은 기관이라도 섹션이 다르면 별도 annotation. 조직 번호는 문서 전체 기준으로 순서 부여.
+검증: `S9.text[372:378]` = `"대전지방법원"` ✓ → 같은 기관이라도 섹션이 다르면 별도 annotation.
 
-**A6 (R3 - 주소):**
+**A6 (R3 - 주소, S9):**
 ```json
 {
   "annotation_id": "A6",
   "section_id": ["S9"],
   "span": [{"start": 912, "end": 922}],
   "original_text": "부산시 중구 광복동",
+  "method": "GENERALIZE",
   "replacement_text": "부산광역시 중구 A",
+  "link_entity_id": "E-333",
+  "rationale": "상세 주소는 간접식별자이므로 시/군/구 단위로 일반화 처리",
   "rules_triggered": "R3"
 }
 ```
-검증: `"부산시 중구 광복동"` = 10자, `922-912=10` ✓
+검증: `S9.text[912:922]` = `"부산시 중구 광복동"` ✓ (10자, `922-912=10`)
 
-**A7 (R4 - 날짜, 일반 사건):**
-```json
-{
-  "annotation_id": "A7",
-  "section_id": ["S9"],
-  "span": [{"start": 47, "end": 58}],
-  "original_text": "1961.12.20.",
-  "replacement_text": "1961. XX. XX.",
-  "rationale": "일반 사건일자는 간접식별자이므로 월일 마스킹 처리",
-  "rules_triggered": "R4"
-}
-```
-검증: `"1961.12.20."` = 11자, `58-47=11` ✓
-
-이 사건에서 R4 annotation 총 8개 (A7~A14): 날짜를 모두 `YYYY. XX. XX.` 형식으로 처리.
+> 이 파일에는 R4(날짜) annotation이 없음 — 날짜 마스킹 예시는 다른 파일에서 확인 필요 (1단계 EDA 대상).
 
 **link_entity_id 활용**:
-- A4 (부산지방법원 in S6): `E-250847`
-- A5 (대전지방법원 in S9): `E-250848`
+- A4 (부산지방법원 in S6): `E-331`
+- A5 (대전지방법원 in S9): `E-332`
 - 동일 개체가 여러 곳에 등장할 경우 같은 `E-` ID 공유 → 문서 내 인물/기관 일관성 추적 가능
 
 ---
@@ -387,3 +398,5 @@ AI 모델 학습 및 평가
 9. **link_entity_id** — 동일 개체의 여러 등장을 연결하는 ID (`E-\d+` 형식). NER 학습에는 불필요하지만 데이터 이해에 유용.
 
 10. **라벨링데이터만 사용** — 원천데이터 폴더는 인코딩 깨짐 문제 있음.
+
+11. **span-original_text 불일치 약 10.4%** (2026-07-14, 200파일/3,099span 샘플 검사) — `section_text[start:end] != original_text`인 annotation이 존재. 원문이 이미 `#이름#` 형태로 치환된 경우(6.5%)와 위치 자체가 어긋난 경우(3.6%)로 나뉨. 전처리 코드에서 `verify_span`을 assert가 아닌 필터링 조건으로 사용할 것 (계획.md 0단계/2단계 참조).

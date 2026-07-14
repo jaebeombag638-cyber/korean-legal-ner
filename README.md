@@ -95,7 +95,7 @@ korean-legal-ner/
 
 ## 구현 로드맵
 
-- [ ] **0단계** — 환경 세팅 (로컬 + Colab)
+- [x] **0단계** — 환경 세팅 (로컬 GPU 사용, Colab 대체)
 - [ ] **1단계** — EDA: 규칙 분포 확인 → NER 태그 매핑 확정
 - [ ] **2단계** — 전처리: span → BIO 변환, `verify_span` 100% 통과 검증
 - [ ] **3단계** — 모델 학습: learning rate·epoch 3회 실험
@@ -137,6 +137,7 @@ streamlit run app.py
 - **R4 날짜 분기**: 다양한 날짜 표기 패턴을 단순화 처리 시 오분류 발생
 - **사법인물 예외**: 판사·검사 등 공직자 이름의 익명화 예외 처리 완성도 한계
 - **동일 test셋 부재**: 공식 벤치마크(비공개 test셋)와 직접 비교 불가
+- **span 위치 불일치** (샘플 검사 약 10.4%): `section_text[start:end]`가 `original_text`와 어긋나는 annotation이 존재. 원인은 (1) 원문이 이미 `#이름#` 형태 placeholder로 치환된 경우, (2) annotation 계산 시점과 배포된 텍스트 버전이 달라 위치가 밀린 경우 두 가지로 추정. 학습 시 불일치 annotation은 필터링하여 제외
 
 ---
 
