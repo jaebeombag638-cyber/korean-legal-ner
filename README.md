@@ -80,15 +80,22 @@ AI Hub 판결문 익명화 데이터로 **KLUE-BERT**를 파인튜닝하여, 한
 
 ```
 korean-legal-ner/
-├── data/                  # AI Hub 원본 데이터 (git 제외)
+├── data/                  # AI Hub 원본 데이터 + 전처리 결과 (git 제외)
+│   └── processed/         # 2단계 산출물: train/val/test.jsonl
+├── scripts/
+│   ├── ner_common.py      # BIO 변환 핵심 함수 (노트북과 공유)
+│   ├── eda_full_scan.py   # 1단계 전체 데이터 분석
+│   └── preprocess_full.py # 2단계 전체 데이터 전처리
 ├── notebooks/
 │   ├── 01_eda.ipynb       # 규칙 분포 분석 및 태그 매핑 확정
 │   ├── 02_preprocess.ipynb # BIO 변환 및 전처리 검증
-│   ├── 03_train.ipynb     # 모델 학습 (Colab)
+│   ├── 03_train.ipynb     # 모델 학습
 │   └── 04_eval.ipynb      # 평가 및 오분류 분석
 ├── app.py                 # Streamlit 데모 앱
 ├── 계획.md                # 상세 구현 계획
-└── 개념.md                # 프로젝트 핵심 개념 정리
+├── 개념.md                # 프로젝트 핵심 개념 정리
+├── official.md            # AI Hub 공식 문서 정리 + 실측 검증 결과
+└── 진행일지.md            # 단계별 진행 기록 (초보자용)
 ```
 
 ---
@@ -97,8 +104,8 @@ korean-legal-ner/
 
 - [x] **0단계** — 환경 세팅 (로컬 GPU 사용, Colab 대체)
 - [x] **1단계** — EDA: 규칙 분포 확인 → NER 태그 매핑 확정 (PER·LOC·ORG 3종)
-- [ ] **2단계** — 전처리: span → BIO 변환, 불일치(약 13.09%) annotation 필터링
-- [ ] **3단계** — 모델 학습: learning rate·epoch 3회 실험
+- [x] **2단계** — 전처리: span → BIO 변환, drift 불일치(7.86%) 필터링, train/val/test 생성
+- [ ] **3단계** — 모델 학습: learning rate·epoch·class weight 4회 실험
 - [ ] **4단계** — 평가: entity별 F1, 오분류 20건 이상 분석
 - [ ] **5단계** — Streamlit 데모 앱 구현 및 Hugging Face Spaces 배포
 - [ ] **6단계** — 결론: 벤치마크 비교 및 한계점 정리
