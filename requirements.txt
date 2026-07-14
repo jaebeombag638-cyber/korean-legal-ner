@@ -1,0 +1,8 @@
+# GPU(CUDA) 환경에서는 torch를 먼저 아래처럼 설치할 것:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+transformers>=4.40
+datasets>=2.19
+seqeval>=1.2.2
+torch>=2.1
+streamlit>=1.33
+ipykernel
