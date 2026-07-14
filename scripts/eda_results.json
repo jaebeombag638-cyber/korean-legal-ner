@@ -1,0 +1,71 @@
+{
+  "total_files": 18900,
+  "rule_counter": {
+    "R7": 310214,
+    "R1": 19477,
+    "R3": 11664
+  },
+  "method_counter": {
+    "GENERALIZE": 341355
+  },
+  "caseclass_counter": {
+    "민사": 7613,
+    "일반행정": 4897,
+    "형사": 2681,
+    "근로자": 675,
+    "금융조세": 675,
+    "특허": 675,
+    "가사": 482,
+    "개인정보": 450,
+    "기업": 450,
+    "세무": 283,
+    "형사A": 10,
+    "형사B": 9
+  },
+  "rule_example_text": {
+    "R1": [
+      "#이름#",
+      "임부금",
+      "#이름#",
+      "#이름#",
+      "#이름#"
+    ],
+    "R7": [
+      "부산지방법원",
+      "대전지방법원",
+      "대구지방법원",
+      "풍각중학교",
+      "대구지방법원"
+    ],
+    "R3": [
+      "부산시 중구 광복동",
+      "서울 은평구 갈현동",
+      "대구 서구 비산동",
+      "비산동",
+      "전남 나주군 봉황면"
+    ]
+  },
+  "span_check": {
+    "total_spans": 341355,
+    "match_ok": 296687,
+    "mismatch_placeholder": 17838,
+    "mismatch_drift": 26830,
+    "match_ok_pct": 86.91,
+    "mismatch_placeholder_pct": 5.23,
+    "mismatch_drift_pct": 7.86
+  },
+  "section_length": {
+    "total_sections": 161186,
+    "over_512_tokens": 21428,
+    "over_512_pct": 13.29,
+    "mean_tokens": 410.8,
+    "median_tokens": 24.0,
+    "max_tokens": 119742
+  },
+  "annotation_count_per_doc": {
+    "mean": 18.06,
+    "median": 9.0,
+    "max": 2380,
+    "min": 0
+  }
+}
