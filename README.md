@@ -105,7 +105,7 @@ korean-legal-ner/
 - [x] **0단계** — 환경 세팅 (로컬 GPU 사용, Colab 대체)
 - [x] **1단계** — EDA: 규칙 분포 확인 → NER 태그 매핑 확정 (PER·LOC·ORG 3종)
 - [x] **2단계** — 전처리: span → BIO 변환, drift 불일치(7.86%) 필터링, train/val/test 생성
-- [ ] **3단계** — 모델 학습: learning rate·epoch·class weight 4회 실험 (Run1 baseline 완료: val F1 0.9071 — 목표 0.80 초과 달성, 단 PER F1 0.49로 entity 간 불균형 확인. Run2~4 진행 예정)
+- [x] **3단계** — 모델 학습: learning rate·epoch·class weight 4회 실험 완료. Run1~3(F1 0.9071~0.9077)은 사실상 동급, Run4(class weight)는 오히려 F1 0.8230으로 하락 — **Run3(lr=2e-5, epoch=3)을 최종 baseline으로 선정**, PER F1(0.47~0.49)이 ORG(0.93) 대비 약한 점은 미해결 (자세한 내용은 [진행일지.md](진행일지.md) 3단계 참조)
 - [ ] **4단계** — 평가: entity별 F1, 오분류 20건 이상 분석
 - [ ] **5단계** — Streamlit 데모 앱 구현 및 Hugging Face Spaces 배포
 - [ ] **6단계** — 결론: 벤치마크 비교 및 한계점 정리
