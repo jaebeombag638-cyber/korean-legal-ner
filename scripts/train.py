@@ -35,15 +35,36 @@ def load_jsonl(path):
     )
 
 
-def compute_class_weights(train_dataset):
-    """태그 빈도 역비례 가중치 (2단계에서 발견한 ORG:PER:LOC 불균형 대응, 계획.md 3단계 참조)."""
+def compute_class_weights(train_dataset, scheme="naive", cap=5.0):
+    """태그 빈도 역비례 가중치 (2단계에서 발견한 ORG:PER:LOC 불균형 대응, 계획.md 3단계 참조).
+
+    scheme="naive" (Run4): counts.sum()/(K*counts) — O를 포함한 전체 토큰 기준 역빈도.
+    O 카운트가 압도적으로 커서 O 가중치가 ~0.15까지 깎이고 PER 가중치는 ~580배까지
+    치솟는다 — 오탐(O를 PER로 잘못 예측) 페널티가 거의 사라져 precision이 무너진 원인
+    (Run4에서 실측, 진행일지.md 3단계 참조).
+
+    scheme="capped" (Run5): O·ORG 가중치는 1.0으로 고정(오탐 페널티 유지)하고,
+    PER·LOC만 ORG 총량 대비 sqrt(비율)만큼 완만히 올리되 최대 cap배로 제한한다.
+    """
     counts = np.zeros(len(LABELS))
     for labels in train_dataset["labels"]:
         for l in labels:
             if l != -100:
                 counts[l] += 1
     counts[counts == 0] = 1
-    weights = counts.sum() / (len(LABELS) * counts)
+
+    if scheme == "naive":
+        weights = counts.sum() / (len(LABELS) * counts)
+    elif scheme == "capped":
+        weights = np.ones(len(LABELS))
+        org_total = counts[label2id["B-ORG"]] + counts[label2id["I-ORG"]]
+        for label, idx in label2id.items():
+            if label in ("O", "B-ORG", "I-ORG"):
+                continue
+            weights[idx] = min(cap, (org_total / counts[idx]) ** 0.5)
+    else:
+        raise ValueError(f"unknown class-weight scheme: {scheme}")
+
     return torch.tensor(weights, dtype=torch.float)
 
 
@@ -91,6 +112,8 @@ def main():
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--class-weight", action="store_true")
+    parser.add_argument("--class-weight-scheme", choices=["naive", "capped"], default="naive",
+                         help="naive=Run4 방식(역빈도), capped=Run5 방식(O/ORG 고정, PER/LOC만 완만히 가중)")
     parser.add_argument("--train-file", default=f"{DATA_DIR}/train.jsonl")
     parser.add_argument("--val-file", default=f"{DATA_DIR}/val.jsonl")
     parser.add_argument("--output-root", default="results")
@@ -104,7 +127,10 @@ def main():
     if args.max_train_examples:
         train_dataset = train_dataset.select(range(min(args.max_train_examples, len(train_dataset))))
 
-    class_weights = compute_class_weights(train_dataset) if args.class_weight else None
+    class_weights = (
+        compute_class_weights(train_dataset, scheme=args.class_weight_scheme)
+        if args.class_weight else None
+    )
 
     model = AutoModelForTokenClassification.from_pretrained(
         "klue/bert-base",
