@@ -107,7 +107,7 @@ korean-legal-ner/
 - [x] **2단계** — 전처리: span → BIO 변환, drift 불일치(7.86%) 필터링, train/val/test 생성
 - [x] **3단계** — 모델 학습: learning rate·epoch·class weight 5회 실험 완료. Run1~3(F1 0.9071~0.9077)은 사실상 동급, class weight는 naive(Run4, F1 0.8230)·완만하게 캡을 씌운 capped(Run5, F1 0.8935) 두 방식 모두 오히려 하락 — **Run3(lr=2e-5, epoch=3)을 최종 baseline으로 선정**, PER F1(0.47~0.49)이 ORG(0.93) 대비 약한 문제는 class weight로 해결되지 않음을 확인 (자세한 내용은 [진행일지.md](진행일지.md) 3단계 참조)
 - [x] **4단계** — 평가: test F1 **0.9045** (목표 0.80 초과, val 0.9077과 거의 동일해 과적합 없음 확인). 오분류 200건 분석 결과 대부분(84%)이 ORG 중첩 기관명의 경계 오류, "트위터" 같은 SNS명 미탐지, 원본 라벨 자체의 노이즈("다음"이 ORG로 잘못 라벨링)까지 발견 (자세한 내용은 [진행일지.md](진행일지.md) 4단계 참조)
-- [ ] **5단계** — Streamlit 데모 앱 구현 및 Hugging Face Spaces 배포
+- [x] **5단계** — Streamlit 데모 앱 구현 (`app.py`): 텍스트 입력 → entity 하이라이트, 익명화된 텍스트, 탐지 개체 표 3종 출력. 로컬 실행·브라우저 테스트로 정상 동작 확인 (Hugging Face Spaces 배포는 6단계 이후 별도 진행)
 - [ ] **6단계** — 결론: 벤치마크 비교 및 한계점 정리
 
 ---
@@ -125,16 +125,18 @@ korean-legal-ner/
 
 ## 설치 및 실행
 
-> 진행 중 — 단계별 완료 시 업데이트됩니다.
-
 ```bash
 pip install transformers datasets seqeval torch streamlit
 ```
 
 ```bash
-# 데모 앱 실행 (5단계 완료 후)
+# 데모 앱 실행 (results/run3/best_model 모델 필요 — 3단계 학습 산출물)
 streamlit run app.py
 ```
+
+> ⚠️ Windows 환경에서 `st.dataframe`/`st.table`이 torch와 같은 프로세스에서 로드된
+> pyarrow와 충돌해 네이티브 세그폴트를 일으키는 걸 확인해, 개체 목록 표는 pyarrow를
+> 쓰지 않는 마크다운 표로 구현했다 (`app.py`의 `render_entity_table_md` 참조).
 
 ---
 
