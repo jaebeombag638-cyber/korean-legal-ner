@@ -1,6 +1,6 @@
 # 판결문 기반 한국어 개인정보 자동 익명화
 
-![상태](https://img.shields.io/badge/상태-진행중-yellow)
+![상태](https://img.shields.io/badge/상태-완료-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C)
 ![HuggingFace](https://img.shields.io/badge/🤗-Transformers-FFD21E)
@@ -85,12 +85,15 @@ korean-legal-ner/
 ├── scripts/
 │   ├── ner_common.py      # BIO 변환 핵심 함수 (노트북과 공유)
 │   ├── eda_full_scan.py   # 1단계 전체 데이터 분석
-│   └── preprocess_full.py # 2단계 전체 데이터 전처리
+│   ├── preprocess_full.py # 2단계 전체 데이터 전처리
+│   ├── train.py           # 3단계 모델 학습 (Run1~5 재현 가능)
+│   └── evaluate.py        # 4단계 test셋 평가 및 오분류 수집
 ├── notebooks/
 │   ├── 01_eda.ipynb       # 규칙 분포 분석 및 태그 매핑 확정
 │   ├── 02_preprocess.ipynb # BIO 변환 및 전처리 검증
 │   ├── 03_train.ipynb     # 모델 학습
-│   └── 04_eval.ipynb      # 평가 및 오분류 분석
+│   ├── 04_eval.ipynb      # 평가 및 오분류 분석
+│   └── 05_conclusion.ipynb # 결론: 벤치마크 비교, 한계점, v2 방향
 ├── app.py                 # Streamlit 데모 앱
 ├── 계획.md                # 상세 구현 계획
 ├── 개념.md                # 프로젝트 핵심 개념 정리
@@ -107,8 +110,8 @@ korean-legal-ner/
 - [x] **2단계** — 전처리: span → BIO 변환, drift 불일치(7.86%) 필터링, train/val/test 생성
 - [x] **3단계** — 모델 학습: learning rate·epoch·class weight 5회 실험 완료. Run1~3(F1 0.9071~0.9077)은 사실상 동급, class weight는 naive(Run4, F1 0.8230)·완만하게 캡을 씌운 capped(Run5, F1 0.8935) 두 방식 모두 오히려 하락 — **Run3(lr=2e-5, epoch=3)을 최종 baseline으로 선정**, PER F1(0.47~0.49)이 ORG(0.93) 대비 약한 문제는 class weight로 해결되지 않음을 확인 (자세한 내용은 [진행일지.md](진행일지.md) 3단계 참조)
 - [x] **4단계** — 평가: test F1 **0.9045** (목표 0.80 초과, val 0.9077과 거의 동일해 과적합 없음 확인). 오분류 200건 분석 결과 대부분(84%)이 ORG 중첩 기관명의 경계 오류, "트위터" 같은 SNS명 미탐지, 원본 라벨 자체의 노이즈("다음"이 ORG로 잘못 라벨링)까지 발견 (자세한 내용은 [진행일지.md](진행일지.md) 4단계 참조)
-- [x] **5단계** — Streamlit 데모 앱 구현 (`app.py`): 텍스트 입력 → entity 하이라이트, 익명화된 텍스트, 탐지 개체 표 3종 출력. 로컬 실행·브라우저 테스트로 정상 동작 확인 (Hugging Face Spaces 배포는 6단계 이후 별도 진행)
-- [ ] **6단계** — 결론: 벤치마크 비교 및 한계점 정리
+- [x] **5단계** — Streamlit 데모 앱 구현 (`app.py`): 텍스트 입력 → entity 하이라이트, 익명화된 텍스트, 탐지 개체 표 3종 출력. 로컬 실행·브라우저 테스트로 정상 동작 확인 (Hugging Face Spaces 배포는 v2에서 별도 진행)
+- [x] **6단계** — 결론 정리 ([`notebooks/05_conclusion.ipynb`](notebooks/05_conclusion.ipynb)): 성능 요약표, 공식 벤치마크와의 4가지 차이 원인(모델 크기·test셋·**태그 스코프**·경계 오류), 9가지 한계점, v2 방향 정리
 
 ---
 
@@ -119,7 +122,9 @@ korean-legal-ner/
 | GPT-OSS-120B (QLoRA) | 120B | **0.9589** | AI Hub 공식 벤치마크, 비공개 test셋 기준 |
 | **KLUE-BERT (본 프로젝트, Run3)** | 110M | **0.9045** | Validation에서 직접 분리한 test셋 기준 (목표 0.80 초과) |
 
-> 두 모델의 test셋이 다르므로 수치 비교는 참고용입니다. 조건 차이는 결론에서 명시합니다.
+> 두 모델의 test셋이 다르고, 공식 벤치마크는 R1~R8 태그 범위를 전제로 하지만 본 프로젝트는
+> 공개 데이터에 실제 존재하는 R1·R3·R7(PER·LOC·ORG)만 학습해 태스크 스코프 자체도 다릅니다.
+> 수치 비교는 참고용입니다. 차이 원인 4가지는 [`notebooks/05_conclusion.ipynb`](notebooks/05_conclusion.ipynb)에 정리했습니다.
 
 ---
 
@@ -145,7 +150,7 @@ streamlit run app.py
 - **512 토큰 초과 섹션** (전체 18,900개 파일 실측 13.29%): truncation으로 후반부 annotation 학습 누락
 - **태그 범위 축소**: 공개 데이터에 R2(주민번호)·R4(날짜)·R8(사업자번호)·R5·R6·R9·R10이 전혀 없어 DAT·ID 탐지는 애초에 학습 불가 — PER·LOC·ORG 3종만 지원
 - **사법인물 예외**: 판사·검사 등 공직자 이름의 익명화 예외 처리 완성도 한계
-- **동일 test셋 부재**: 공식 벤치마크(비공개 test셋)와 직접 비교 불가
+- **동일 test셋 부재 + 태그 스코프 차이**: 공식 벤치마크(비공개 test셋)와 직접 비교 불가할 뿐 아니라, 공식 벤치마크는 R1~R8 태그 범위를 전제로 하는 반면 본 프로젝트는 공개 데이터에 실제 존재하는 R1·R3·R7 3종만 학습해 태스크 난이도 자체도 다름 (자세한 내용은 [`notebooks/05_conclusion.ipynb`](notebooks/05_conclusion.ipynb) 참조)
 - **중첩 기관명 경계 오류**: 4단계 오분류 분석 결과, 전체 오류의 84%가 ORG이고 그중 대다수가 `국가정보원 심리전단`처럼 여러 단어가 겹친 기관명의 경계를 짧게/넓게 잘못 잡는 패턴 — PER F1(0.55)·LOC F1(0.82)이 ORG(0.92)보다 낮은 것과 함께 본 모델의 가장 뚜렷한 약점
 - **class weight 역효과 (2회 확인)**: 3단계에서 ORG:PER:LOC 불균형(26:1:1) 대응으로 역빈도 class weight를 시도했으나 precision이 무너지며 F1 크게 하락(Run4). 가중치를 최대 5배로 완만하게 캡을 씌운 방식(Run5)도 정도만 약할 뿐 같은 방향으로 하락 — 가중치 강도의 문제가 아니라, 이 데이터·모델 조합에서는 class weight 자체가 PER·LOC 개선에 효과가 없음을 확인
 - **원본 라벨 자체의 노이즈**: 오분류 분석 중 `다음과 같은`의 `다음`이 ORG로 잘못 라벨링된 사례 발견 — 데이터셋의 규칙 기반 자동 라벨링 과정 자체에 오류가 있을 수 있음
